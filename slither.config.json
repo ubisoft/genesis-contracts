@@ -1,0 +1,13 @@
+{
+  "filter_paths": "lib",
+  "solc_remaps": [
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "forge-std/=lib/forge-std/src/",
+    "ERC721Psi/=lib/ERC721Psi/contracts/",
+    "solidity-bits/=lib/solidity-bits/",
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "chainlink/=lib/chainlink/contracts/src/",
+    "erc4626-tests/=lib/chainlink/contracts/foundry-lib/openzeppelin-contracts/lib/erc4626-tests/",
+    "openzeppelin/=lib/openzeppelin-contracts/contracts/"
+  ]
+}
