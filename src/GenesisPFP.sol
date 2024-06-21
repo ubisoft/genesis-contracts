@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
 //  **     **  **       **                    ****   **
 // /**    /** /**      //                    /**/   /**
@@ -11,16 +11,16 @@ pragma solidity ^0.8.18;
 // ///////    /////    // //////   //////    //      //
 
 import {ChainlinkVRFMetadata} from "./abstracts/ChainlinkVRFMetadata.sol";
-import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
-import {EIP712} from "openzeppelin/utils/cryptography/EIP712.sol";
-import {ERC721Psi} from "src/ERC721Psi/ERC721Psi.sol";
-import {ERC721PsiAddressData} from "src/ERC721Psi/extension/ERC721PsiAddressData.sol";
-import {Errors} from "./librairies/Errors.sol";
-import {IGenesisPFP} from "./interfaces/IGenesisPFP.sol";
 import {GenesisBase} from "./abstracts/GenesisBase.sol";
+import {IGenesisPFP} from "./interfaces/IGenesisPFP.sol";
+import {Errors} from "./librairies/Errors.sol";
 import {MintData} from "./types/MintData.sol";
 import {VRFV2WrapperConsumerBase} from "chainlink/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
-import {Strings} from "openzeppelin/utils/Strings.sol";
+import {Strings} from "openzeppelinV4/utils/Strings.sol";
+import {ECDSA} from "openzeppelinV4/utils/cryptography/ECDSA.sol";
+import {EIP712} from "openzeppelinV4/utils/cryptography/EIP712.sol";
+import {ERC721Psi} from "src/ERC721Psi/ERC721Psi.sol";
+import {ERC721PsiAddressData} from "src/ERC721Psi/extension/ERC721PsiAddressData.sol";
 
 /**
  * @title GenesisPFP
@@ -32,6 +32,7 @@ import {Strings} from "openzeppelin/utils/Strings.sol";
  * starting from 1.
  */
 contract GenesisPFP is GenesisBase, IGenesisPFP, ChainlinkVRFMetadata {
+
     using Strings for uint256;
 
     // =============================================================
@@ -64,7 +65,7 @@ contract GenesisPFP is GenesisBase, IGenesisPFP, ChainlinkVRFMetadata {
      * @param _symbol symbol of the contract
      * @param _version version of the contract
      * @param _minter allowed address to mint
-     * @param _minter royalty receiver
+     * @param _vault royalty receiver
      * @param _link address to fund Chainlink VRF
      * @param _vrfV2Wrapper address to interact with Chainlink VRF
      */
@@ -107,16 +108,12 @@ contract GenesisPFP is GenesisBase, IGenesisPFP, ChainlinkVRFMetadata {
 
         // Verify the signer has the role MINTER_ROLE
         address recovered = verifySignature(request, signature);
-        if (!hasRole(MINTER_ROLE, recovered)) {
-            revert Errors.InvalidSignature();
-        }
+        if (!hasRole(MINTER_ROLE, recovered)) revert Errors.InvalidSignature();
 
         // Get user allocation
         uint256 allocation = request.mint_amount;
 
-        if (request.mint_amount > _remainingSupply) {
-            allocation = _remainingSupply;
-        }
+        if (request.mint_amount > _remainingSupply) allocation = _remainingSupply;
         // Make sure a user cannot mint twice with the same account
         minted[request.user_nonce] = true;
 
@@ -189,16 +186,13 @@ contract GenesisPFP is GenesisBase, IGenesisPFP, ChainlinkVRFMetadata {
         if (!_exists(tokenId)) revert Errors.ERC721UriNonExistent();
 
         // Return empty tokenURI if metadata CID isn't registered
-        if (bytes(_baseURI()).length == 0) {
-            return "";
-        }
+        if (bytes(_baseURI()).length == 0) return "";
 
         // Return a fallback URI if reveal isn't called yet
-        if (chainlinkSeed == 0) {
-            return string(abi.encodePacked(_baseURI(), "default.json"));
-        }
+        if (chainlinkSeed == 0) return string(abi.encodePacked(_baseURI(), "default.json"));
 
         uint256 metadataId = ((tokenId + chainlinkSeed) % 9999) + 1;
         return string(abi.encodePacked(_baseURI(), metadataId.toString(), ".json"));
     }
+
 }

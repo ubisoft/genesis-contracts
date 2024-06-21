@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
 //  **     **  **       **                    ****   **
 // /**    /** /**      //                    /**/   /**
@@ -10,10 +10,10 @@ pragma solidity ^0.8.18;
 // //*******  /******  /** ****** //******   /**    //**
 // ///////    /////    // //////   //////    //      //
 
-import {Errors} from "src/librairies/Errors.sol";
-import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {VRFCoordinatorV2Interface} from "chainlink/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import {VRFV2WrapperConsumerBase} from "chainlink/v0.8/vrf/VRFV2WrapperConsumerBase.sol";
+import {Ownable} from "openzeppelinV4/access/Ownable.sol";
+import {Errors} from "src/librairies/Errors.sol";
 
 /**
  * @title ChainlinkVRFMetadata
@@ -21,6 +21,7 @@ import {VRFV2WrapperConsumerBase} from "chainlink/v0.8/vrf/VRFV2WrapperConsumerB
  * @dev Implementation of Chainlink VRFV2WrapperConsumerBase to request random numbers
  */
 abstract contract ChainlinkVRFMetadata is VRFV2WrapperConsumerBase, Ownable {
+
     // =============================================================
     //                   VARIABLES
     // =============================================================
@@ -48,9 +49,7 @@ abstract contract ChainlinkVRFMetadata is VRFV2WrapperConsumerBase, Ownable {
      * @dev _numWords is the number of random words to request.
      */
     function requestChainlinkVRF(uint32 _callbackGasLimit, uint16 _requestConfirmations) external onlyOwner {
-        if (chainlinkRequestID != 0) {
-            revert Errors.RequestAlreadyInitialized();
-        }
+        if (chainlinkRequestID != 0) revert Errors.RequestAlreadyInitialized();
         // 150_000 gas should be more than enough for the callback
         // 6 block confirmations or more
         // 1 random number used a a seed for the tokenIDs
@@ -88,4 +87,5 @@ abstract contract ChainlinkVRFMetadata is VRFV2WrapperConsumerBase, Ownable {
         // Anyone can re-generate the tokenIds from the seed deterministically
         chainlinkSeed = _randomWords[0];
     }
+
 }

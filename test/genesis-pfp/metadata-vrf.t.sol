@@ -1,26 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
-import {AccessControl} from "openzeppelin/access/AccessControl.sol";
+import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
+
+import {console2} from "forge-std/Test.sol";
+import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
+import {Strings} from "openzeppelinV4/utils/Strings.sol";
+import {GenesisPFP} from "src/GenesisPFP.sol";
+import {Errors} from "src/librairies/Errors.sol";
+
+import {MintData} from "src/types/MintData.sol";
 import {BaseTest} from "test/Base.t.sol";
 import {Events} from "test/utils/Events.sol";
-import {Errors} from "src/librairies/Errors.sol";
-import {GenesisPFP} from "src/GenesisPFP.sol";
-import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
-import {MintData} from "src/types/MintData.sol";
-import {Strings} from "openzeppelin/utils/Strings.sol";
-import {console2} from "forge-std/Test.sol";
 
 /**
  * @dev MetadataVrf_Test holds all tests related to the metadatas
  */
 contract MetadataVrf_Test is GenesisPFP_Base_Test {
+
     using Strings for uint256;
 
     function setUp() public virtual override {
         GenesisPFP_Base_Test.setUp();
-
-        vm.startPrank(owner);
     }
 
     /**
@@ -36,16 +37,17 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
         assertEq(genesis.baseURI(), "");
 
         // Should revert when caller isn't contract owner
-        changePrank(bob);
+        vm.prank(bob);
         vm.expectRevert("Ownable: caller is not the owner");
         genesis.setBaseURI(_cid);
 
         // Should not revert when called by the owner
-        changePrank(owner);
+        vm.prank(owner);
         genesis.setBaseURI(_cid);
         assertEq(genesis.baseURI(), _cid);
 
         // Should revert when called after a first initialization
+        vm.prank(owner);
         vm.expectRevert(Errors.BaseURIAlreadyInitialized.selector);
         genesis.setBaseURI(_cid);
     }
@@ -66,27 +68,27 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
         // @param _callbackGasLimit 150k units of gas should be more than enough for 1 random number
         // @param _requestConfirmations 1 block confirmation during unit tests but
         // we should use 6 or more on mainnet for potential reorgs
-        changePrank(bob);
+        vm.prank(bob);
         vm.expectRevert("Ownable: caller is not the owner");
         genesis.requestChainlinkVRF(150_000, 1);
 
         // Should revert if Genesis contract doesn't own Link tokens
-        changePrank(owner);
+        vm.prank(owner);
         vm.expectRevert();
         genesis.requestChainlinkVRF(150_000, 1);
 
         // Fund the Genesis contract with LINK tokens and request a random number
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         linkToken.transfer(address(genesis), 10e18);
 
         // Request VRF
-        changePrank(owner);
+        vm.prank(owner);
         genesis.requestChainlinkVRF(150_000, 1);
         assertGt(genesis.chainlinkRequestID(), 0);
         assertEq(genesis.chainlinkSeed(), 0);
 
         // Mock the VRF request fulfillment
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         coordinator.fulfillRandomWords(1, address(wrapper));
         assertGt(genesis.chainlinkRequestID(), 0);
         assertGt(genesis.chainlinkSeed(), 0);
@@ -102,27 +104,27 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
         assertEq(ownerBalance, 0);
 
         // Should revert if Genesis contract doesn't own Link tokens
-        changePrank(owner);
+        vm.prank(owner);
         vm.expectRevert(Errors.EmptyLinkBalance.selector);
         genesis.withdrawRemainingLink(owner);
 
         // Fund the Genesis contract with 10 LINK tokens and request a random number
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         linkToken.transfer(address(genesis), 10 * 10 ** 18);
 
         // Should revert if caller isn't owner
-        changePrank(bob);
+        vm.prank(bob);
         vm.expectRevert("Ownable: caller is not the owner");
         genesis.withdrawRemainingLink(bob);
 
         // Request VRF
-        changePrank(owner);
+        vm.prank(owner);
         genesis.requestChainlinkVRF(150_000, 1);
         assertGt(genesis.chainlinkRequestID(), 0);
         assertEq(genesis.chainlinkSeed(), 0);
 
         // Fulfill mock VRF
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         coordinator.fulfillRandomWords(1, address(wrapper));
         assertGt(genesis.chainlinkRequestID(), 0);
         assertGt(genesis.chainlinkSeed(), 0);
@@ -133,7 +135,7 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
         assertGt(contractBalance, 0);
 
         // Should not revert
-        changePrank(owner);
+        vm.prank(owner);
         genesis.withdrawRemainingLink(owner);
 
         // Owner now has the LINK token in its wallet
@@ -153,7 +155,7 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
      * @dev should return a correct tokenURI when reveal is done
      */
     function test_loop_reveal() public {
-        changePrank(bob);
+        vm.prank(bob);
         require(bytes(genesis.baseURI()).length == 0);
 
         // expected _cid and _uri after calling `setBaseURI`
@@ -182,11 +184,8 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
                 bytes memory sig = get_mint_data_sig(minterPrivateKey, data);
                 genesis.mintWithSignature(data, sig);
                 uint256 balance = genesis.balanceOf(user);
-                if (lastMint) {
-                    assertEq(balance, 1);
-                } else {
-                    assertEq(balance, 2);
-                }
+                if (lastMint) assertEq(balance, 1);
+                else assertEq(balance, 2);
                 token_count += balance;
                 // tokenURI(1) should return an empty string
                 string memory uri = genesis.tokenURI(i);
@@ -197,7 +196,7 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
         }
 
         // call setBaseURI
-        changePrank(owner);
+        vm.prank(owner);
         genesis.setBaseURI(_baseURI);
         assertEq(genesis.baseURI(), _baseURI);
 
@@ -214,11 +213,11 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
         require(genesis.chainlinkRequestID() == 0);
 
         // Fund the Genesis contract with LINK
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         linkToken.transfer(address(genesis), 1000000000000000000);
 
         // tokenURI should return the correct URI after reveal
-        changePrank(owner);
+        vm.prank(owner);
         genesis.requestChainlinkVRF(150_000, 1);
         coordinator.fulfillRandomWords(1, address(wrapper));
 
@@ -239,9 +238,7 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
                 uint256 expected_metadata_id = ((i + seed) % 9999) + 1;
 
                 // Register the metadata offset once at the beginning
-                if (offset_start == 0) {
-                    offset_start = expected_metadata_id;
-                }
+                if (offset_start == 0) offset_start = expected_metadata_id;
                 // metadata_id should be bound between 1 and 9999
                 assert(expected_metadata_id > 0 && expected_metadata_id < 10000);
                 // Compute the full URI based on the computed metadata_id
@@ -261,12 +258,8 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
                     offset_reset = false;
                 }
                 // Verify if offset resets when metadata id reaches 9999
-                if (expected_metadata_id == 9999) {
-                    offset_reset = true;
-                }
-                if (i == 9999) {
-                    assertEq(expected_metadata_id, (offset_start - 1));
-                }
+                if (expected_metadata_id == 9999) offset_reset = true;
+                if (i == 9999) assertEq(expected_metadata_id, (offset_start - 1));
             }
         }
     }
@@ -281,7 +274,7 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
      */
     function test_RevertWhen_OwnableCallerIsNotOwner() public {
         // Should revert when caller isn't contract owner
-        changePrank(bob);
+        vm.prank(bob);
         vm.expectRevert("Ownable: caller is not the owner");
         genesis.setBaseURI("test_cid");
     }
@@ -290,12 +283,13 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
      * @dev setMetadatCID should revert when it's already been set once
      */
     function test_RevertWhen_BaseURIAlreadyInitialized() public {
-        changePrank(owner);
+        vm.prank(owner);
         // Should revert when caller isn't contract owner
         genesis.setBaseURI("test_cid");
         assertEq(genesis.baseURI(), "test_cid");
 
         // Should revert when called after a first initialization
+        vm.prank(owner);
         vm.expectRevert(Errors.BaseURIAlreadyInitialized.selector);
         genesis.setBaseURI("other_cid");
     }
@@ -304,31 +298,32 @@ contract MetadataVrf_Test is GenesisPFP_Base_Test {
      * @dev `requestChainlinkVRF` should revert `RequestAlreadyInitialized` when called twice
      */
     function test_RevertWhen_RequestAlreadyInitialized() public {
-        changePrank(owner);
+        vm.prank(owner);
 
         // Should not be initialized
         assertEq(genesis.chainlinkRequestID(), 0);
         assertEq(genesis.chainlinkSeed(), 0);
 
         // Fund the Genesis contract with LINK tokens and request a random number
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         linkToken.transfer(address(genesis), 1000000000000000000);
 
         // Request VRF a first time
-        changePrank(owner);
+        vm.prank(owner);
         genesis.requestChainlinkVRF(150_000, 1);
         assertGt(genesis.chainlinkRequestID(), 0);
         assertEq(genesis.chainlinkSeed(), 0);
 
         // Mock the VRF request fulfillment
-        changePrank(linkDeployer);
+        vm.prank(externalDeployer);
         coordinator.fulfillRandomWords(1, address(wrapper));
         assertGt(genesis.chainlinkRequestID(), 0);
         assertGt(genesis.chainlinkSeed(), 0);
 
         // Request VRF a second time
-        changePrank(owner);
+        vm.prank(owner);
         vm.expectRevert(Errors.RequestAlreadyInitialized.selector);
         genesis.requestChainlinkVRF(150_000, 1);
     }
+
 }

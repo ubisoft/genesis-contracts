@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
-import {AccessControl} from "openzeppelin/access/AccessControl.sol";
+import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
+
+import {StdStorage, stdStorage} from "forge-std/Test.sol";
+import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
+import {GenesisPFP} from "src/GenesisPFP.sol";
+import {Errors} from "src/librairies/Errors.sol";
+
+import {MintData} from "src/types/MintData.sol";
 import {BaseTest} from "test/Base.t.sol";
 import {Events} from "test/utils/Events.sol";
-import {Errors} from "src/librairies/Errors.sol";
-import {GenesisPFP} from "src/GenesisPFP.sol";
-import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
-import {MintData} from "src/types/MintData.sol";
-import {StdStorage, stdStorage} from "forge-std/Test.sol";
 
 /**
  * @dev GasReport_Test holds all tests used to generate gas reports
  */
 contract GasReport_Test is GenesisPFP_Base_Test {
+
     using stdStorage for StdStorage;
 
     function setUp() public virtual override {
@@ -32,7 +35,7 @@ contract GasReport_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: reserveWallet,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MIN_RESERVE,
                 user_nonce: nonce
@@ -43,7 +46,7 @@ contract GasReport_Test is GenesisPFP_Base_Test {
             assertEq(genesis.balanceOf(reserveWallet), 200);
 
             // Simulate transfers for gas report
-            for (uint256 i = 1; i <= 200; i+=2) {
+            for (uint256 i = 1; i <= 200; i += 2) {
                 genesis.transferFrom(reserveWallet, vm.addr(i), i);
                 genesis.safeTransferFrom(reserveWallet, vm.addr(i + 1), i + 1);
             }
@@ -57,18 +60,17 @@ contract GasReport_Test is GenesisPFP_Base_Test {
      */
     function test_mint_transfer_gas_report() public {
         uint256 i = 1;
-        vm.startPrank(vm.addr(i));
 
         while (genesis.remainingSupply() > 0) {
             bool lastMint = (genesis.remainingSupply() == 1);
             address _minter = vm.addr(i);
-            changePrank(_minter);
+            vm.startPrank(_minter);
 
             bytes32 nonce = bytes32(keccak256(abi.encode(_minter)));
             MintData memory data = MintData({
                 to: _minter,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: 2,
                 user_nonce: nonce
@@ -87,6 +89,8 @@ contract GasReport_Test is GenesisPFP_Base_Test {
                 genesis.transferFrom(_minter, vm.addr(i + 0xFFFFA), i);
                 i += 2;
             }
+            vm.stopPrank();
         }
     }
+
 }

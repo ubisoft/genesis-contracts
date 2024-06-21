@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
 //  **     **  **       **                    ****   **
 // /**    /** /**      //                    /**/   /**
@@ -10,26 +10,36 @@ pragma solidity ^0.8.18;
 // //*******  /******  /** ****** //******   /**    //**
 // ///////    /////    // //////   //////    //      //
 
-import {AccessControl} from "openzeppelin/access/AccessControl.sol";
-import {EIP712} from "openzeppelin/utils/cryptography/EIP712.sol";
+import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
+
+import {IAccessControl} from "openzeppelinV4/access/IAccessControl.sol";
+
+import {Ownable} from "openzeppelinV4/access/Ownable.sol";
+import {IERC721} from "openzeppelinV4/token/ERC721/IERC721.sol";
+import {IERC721Metadata} from "openzeppelinV4/token/ERC721/extensions/IERC721Metadata.sol";
+import {ERC2981} from "openzeppelinV4/token/common/ERC2981.sol";
+import {EIP712} from "openzeppelinV4/utils/cryptography/EIP712.sol";
 import {ERC721Psi} from "src/ERC721Psi/ERC721Psi.sol";
 import {ERC721PsiAddressData} from "src/ERC721Psi/extension/ERC721PsiAddressData.sol";
-import {ERC2981} from "openzeppelin/token/common/ERC2981.sol";
-import {Errors} from "../librairies/Errors.sol";
-import {IAccessControl} from "openzeppelin/access/IAccessControl.sol";
-import {IERC721} from "openzeppelin/token/ERC721/IERC721.sol";
-import {IERC721Metadata} from "openzeppelin/token/ERC721/extensions/IERC721Metadata.sol";
-import {IGenesisBase} from "../interfaces/IGenesisBase.sol";
-import {MintData} from "../types/MintData.sol";
-import {Ownable} from "openzeppelin/access/Ownable.sol";
+
+import {IGenesisBase} from "src/interfaces/IGenesisBase.sol";
+import {Errors} from "src/librairies/Errors.sol";
+import {MintData} from "src/types/MintData.sol";
 
 /**
  * @title GenesisBase
  *
- * @dev GenesisBase implements ERC721 and should be used as a base
- * for GenesisPFP and the other upcoming Genesis contracts
+ * @dev GenesisBase implements ERC721Psi as a base for GenesisPFP
  */
 abstract contract GenesisBase is IGenesisBase, ERC721PsiAddressData, ERC2981, EIP712, Ownable, AccessControl {
+
+    // =============================================================
+    //                   EVENTS
+    // =============================================================
+
+    /// @notice UpdateDefaultRoyalty is emitted when calling `updateDefaultRoyalty`
+    event UpdateDefaultRoyalty(address receiver, uint96 feeNumerator);
+
     // =============================================================
     //                   VARIABLES
     // =============================================================
@@ -53,9 +63,7 @@ abstract contract GenesisBase is IGenesisBase, ERC721PsiAddressData, ERC2981, EI
      * @inheritdoc IGenesisBase
      */
     function setBaseURI(string calldata _uri) external override onlyOwner {
-        if (bytes(baseURI).length > 0) {
-            revert Errors.BaseURIAlreadyInitialized();
-        }
+        if (bytes(baseURI).length > 0) revert Errors.BaseURIAlreadyInitialized();
         baseURI = _uri;
     }
 
@@ -64,6 +72,7 @@ abstract contract GenesisBase is IGenesisBase, ERC721PsiAddressData, ERC2981, EI
      */
     function updateDefaultRoyalty(address receiver, uint96 feeNumerator) external onlyOwner {
         _setDefaultRoyalty(receiver, feeNumerator);
+        emit UpdateDefaultRoyalty(receiver, feeNumerator);
     }
 
     // =============================================================
@@ -77,7 +86,7 @@ abstract contract GenesisBase is IGenesisBase, ERC721PsiAddressData, ERC2981, EI
         public
         view
         virtual
-        override(ERC721Psi, ERC2981, AccessControl)
+        override (ERC721Psi, ERC2981, AccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -95,4 +104,5 @@ abstract contract GenesisBase is IGenesisBase, ERC721PsiAddressData, ERC2981, EI
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
+
 }

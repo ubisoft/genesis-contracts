@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
-import {AccessControl} from "openzeppelin/access/AccessControl.sol";
+import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
+
+import {Strings} from "openzeppelinV4/utils/Strings.sol";
+import {GenesisPFP} from "src/GenesisPFP.sol";
 import {BaseTest} from "test/Base.t.sol";
 import {Events} from "test/utils/Events.sol";
-import {GenesisPFP} from "src/GenesisPFP.sol";
-import {Strings} from "openzeppelin/utils/Strings.sol";
 
 contract GenesisPFP_Constructor_Test is BaseTest {
+
     function setUp() public virtual override {
         BaseTest.setUp();
     }
@@ -26,8 +28,9 @@ contract GenesisPFP_Constructor_Test is BaseTest {
         emit RoleGranted({role: MINTER_ROLE, account: address(minter), sender: address(owner)});
 
         vm.prank(owner);
-        genesis =
-        new GenesisPFP("GenesisPFP", "GEN", "1.0", address(minter), address(vault), address(linkToken), address(wrapper));
+        genesis = new GenesisPFP(
+            "GenesisPFP", "GEN", "1.0", address(minter), address(vault), address(linkToken), address(wrapper)
+        );
 
         require(genesis.remainingSupply() == GENESIS_PFP_INITIAL_REMAINING_SUPPLY);
 
@@ -72,4 +75,5 @@ contract GenesisPFP_Constructor_Test is BaseTest {
         vm.prank(owner);
         genesis.updateDefaultRoyalty(address(bob), 1500);
     }
+
 }

@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
-import {AccessControl} from "openzeppelin/access/AccessControl.sol";
+import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
+import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
+import {GenesisPFP} from "src/GenesisPFP.sol";
+import {Errors} from "src/librairies/Errors.sol";
+
+import {MintData} from "src/types/MintData.sol";
 import {BaseTest} from "test/Base.t.sol";
 import {Events} from "test/utils/Events.sol";
-import {Errors} from "src/librairies/Errors.sol";
-import {GenesisPFP} from "src/GenesisPFP.sol";
-import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
-import {MintData} from "src/types/MintData.sol";
 
 /**
  * @dev Transfer_Test holds all tests related to the transfer functions
  */
 contract Transfer_Test is GenesisPFP_Base_Test {
+
     function setUp() public virtual override {
         GenesisPFP_Base_Test.setUp();
 
@@ -27,7 +29,7 @@ contract Transfer_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -50,7 +52,7 @@ contract Transfer_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -73,7 +75,7 @@ contract Transfer_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -97,13 +99,13 @@ contract Transfer_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
         });
         bytes memory sig = get_mint_data_sig(minterPrivateKey, data);
-        
+
         genesis.mintWithSignature(data, sig);
         uint256 balance = genesis.balanceOf(bob);
         require(balance == 2);
@@ -112,4 +114,5 @@ contract Transfer_Test is GenesisPFP_Base_Test {
         genesis.safeTransferFrom(bob, vm.addr(42), 2);
         require(genesis.balanceOf(vm.addr(42)) == 2);
     }
+
 }

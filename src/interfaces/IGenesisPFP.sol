@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
 //  **     **  **       **                    ****   **
 // /**    /** /**      //                    /**/   /**
@@ -10,8 +10,8 @@ pragma solidity ^0.8.18;
 // //*******  /******  /** ****** //******   /**    //**
 // ///////    /////    // //////   //////    //      //
 
-import {IGenesisBase} from "./IGenesisBase.sol";
 import {MintData} from "../types/MintData.sol";
+import {IGenesisBase} from "./IGenesisBase.sol";
 
 /**
  * @title IGenesisPFP
@@ -19,6 +19,7 @@ import {MintData} from "../types/MintData.sol";
  * @notice Interface for the GenesisPFP contract, implementing minting and signature verification
  */
 interface IGenesisPFP {
+
     /**
      * @notice allows a user to mint a token with a valid signature
      * @dev signarture must be signed by the contract owner
@@ -26,4 +27,5 @@ interface IGenesisPFP {
      * @param signature EIP712-typed signature
      */
     function mintWithSignature(MintData calldata request, bytes memory signature) external;
+
 }

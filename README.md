@@ -4,9 +4,20 @@ Smart contracts for [Champions Tactics™ Grimoria Chronicles](https://champions
 
 Champions Tactics™ Grimoria Chronicles is a PVP Tactical RPG game on PC by Ubisoft. Assemble a team of mythical Champions and craft you legend in the dark and mystical world of Grimoria.
 
+## Architecture
+
+For a global overview of the contracts, refer to the diagram below
+
+![Architecture diagram](architecture.png "Genesis contracts architecture")
+
+
 ## Security
 
-The `GenesisPFP` smart contract is deployed on Ethereum mainnet at address `0xE841e6e68BECFC54b621A23a41f8C1a829a4cf44` and has been audited by KALOS. The report can be found [here](<./audit/[KALOS] Ubisoft Genesis PFP Audit Report v1.0 (ENG).pdf>).
+`GenesisPFP` is deployed on Ethereum mainnet at address `0xE841e6e68BECFC54b621A23a41f8C1a829a4cf44` and has been audited by KALOS. The report can be found [here](<./audit/[KALOS] Ubisoft Genesis PFP Audit Report v1.0 (ENG).pdf>).
+
+`GenesisChampionFactory`, `GenesisChampion`, `GenesisMinter`, `GenesisCrafter`, `GenesisRewardsDistributor`, `GenesisCrafterRule` have not yet been deployed.
+
+`AuthenticatedRelay` is our global entrypoint for all mint operations on any EVM chain, it's hasn't been deployed yet.
 
 ### Slither reports
 
@@ -15,14 +26,27 @@ The `GenesisPFP` smart contract is deployed on Ethereum mainnet at address `0xE8
 
 ## Installation
 
-1. Clone this repository
-2. Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
+### From source
+
+1. Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
+2. Clone this repository
 3. Initialize the submodules
 
 ```bash
-git submodule deinit --force .
+# when switching branch, it's recommended to deinit the submodules first with: 
+# git submodule deinit --force .
 git submodule update --init --recursive
 ```
+4. Install external dependencies for `lib/authenticated-relay` (see [README.md](./lib/authenticated-relay/README.md))
+```
+cd lib/authenticated-relay
+forge install
+# build sequence contracts dependencies:
+pushd lib/contracts-library
+yarn && yarn build
+popd
+```
+5. Install node dependencies: `npm install` 
 
 ## Contract documentation
 
@@ -38,31 +62,24 @@ Contract documentation is auto-generated using `forge doc`.
 forge build
 ```
 
-Genesis PFP's contract ABI can be found in [`out/GenesisPFP.sol/GenesisPFP.json`](out/GenesisPFP.sol/GenesisPFP.json) after building the contracts
-
 ### Test
 
 ```bash
-forge test
+forge clean && forge test --ffi --force --summary --detailed
 ```
 
-#### Coverage report
-
-LCOV file can be generated and viewed as an HTML file using the following commands:
-
-```bash
-$ forge coverage --report lcov
-$ genhtml --branch-coverage --output "coverage" lcov.info
-```
+> [GenesisCrafter](./src/GenesisCrafter.sol) and [GenesisMinter](./src/GenesisMinter.sol) use [openzeppelin-foundry-upgrades](https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades) to make safety checks before upgrading proxy implementations, we need to use the `--ffi` flag that will run external processes (i.e. shell scripts) from Solidity code.
 
 ### Deploy
 
-#### Deploy locally
+**Deploying Locally**
 
 1. Start a local testnet using [anvil](https://book.getfoundry.sh/anvil/) or any local testnet client
 2. In another terminal, setup the required env variables and run `forge create` to deploy the contract as below
 
 > Use the `--unlocked` flag with Anvil's first test account used as sender with `ETH_FROM`
+
+For GenesisPFP
 
 ```bash
 export ETH_FROM="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
@@ -80,7 +97,27 @@ forge create                                    \
         $LINK_ADDRESS $VRF_WRAPPER_ADDRESS
 ```
 
-#### Deploy on a public network
+```bash
+source ./script/GenesisChampionFactory/anvil.env
+forge script script/GenesisChampionFactory/Deploy.s.sol --sig "deploy()" --rpc-url http://localhost:8545 --broadcast
+
+# GenesisChampionFactory deployed at 0x5FbDB2315678afecb367f032d93F642f64180aa3
+✅  [Success]Hash: 0x5fc8eb0e8498bf7c5dae6f6884a27a1c7d083288b28878f2062dc7e3f8784165
+Contract Address: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+Block: 1
+Paid: 0.016042904 ETH (4010726 gas * 4 gwei)
+
+# GenesisChampion implementation deployed using `GenesisChampionFactory.deploy()`
+✅  [Success]Hash: 0x9da0f622ce953256f5d0bddac9849bfd6b0baf78785bfef7aa4ccb385894777d
+Block: 2
+Paid: 0.011808357309540703 ETH (3021259 gas * 3.908422717 gwei)
+
+# Implementation address can be called using cast
+cast call 0x5fbdb2315678afecb367f032d93f642f64180aa3 "getLatestDeployment()"
+0x000000000000000000000000a16e02e87b7454126e5e10d957a927a7f5b5d2be
+```
+
+**Deploy on a public network (GenesisPFP)**
 
 We use the Sepolia testnet to deploy and test our contracts in dev environment.
 
@@ -103,7 +140,7 @@ You will need to provide a mnemonic phrase, private key, ledger or any wallet so
 To deploy the contracts on Sepolia, run the following command (replace `$RPC_URL` with a valid Sepolia RPC endpoint):
 
 ```bash
-forge create                                    \
+$forge create                                    \
     --rpc-url $RPC_URL                  \
     src/GenesisPFP.sol:GenesisPFP               \
     --constructor-args "Genesis PFP" "PFP" "1"  \
@@ -113,8 +150,8 @@ forge create                                    \
 
 ## Authors
 
-* Nicolas LAW YIM WAN
-* Louis GAROCHE
+- Nicolas LAW YIM WAN
+- Louis GAROCHE
 
 ## License
 

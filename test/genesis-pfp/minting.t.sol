@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
-import {AccessControl} from "openzeppelin/access/AccessControl.sol";
+import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
+
+import {StdStorage, stdStorage} from "forge-std/Test.sol";
+import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
+import {GenesisPFP} from "src/GenesisPFP.sol";
+import {Errors} from "src/librairies/Errors.sol";
+
+import {MintData} from "src/types/MintData.sol";
 import {BaseTest} from "test/Base.t.sol";
 import {Events} from "test/utils/Events.sol";
-import {Errors} from "src/librairies/Errors.sol";
-import {GenesisPFP} from "src/GenesisPFP.sol";
-import {GenesisPFP_Base_Test} from "./GenesisPFP.t.sol";
-import {MintData} from "src/types/MintData.sol";
-import {StdStorage, stdStorage} from "forge-std/Test.sol";
 
 /**
  * @dev MintWithSignature_Test holds all tests related to the `mintWithSignature` function
  */
 contract MintWithSignature_Test is GenesisPFP_Base_Test {
+
     using stdStorage for StdStorage;
 
     function setUp() public virtual override {
@@ -38,15 +41,15 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         uint256 token_count = 0;
         uint256 wallet_index = 1;
 
-        vm.startPrank(reserveWallet);
         // Phase [RESERVE]: mint 200 reserve tokens to `reserveWallet`
         {
+            vm.startPrank(reserveWallet);
             assertEq(genesis.remainingSupply(), 9999);
             bytes32 nonce = bytes32(keccak256(abi.encode(reserveWallet)));
             MintData memory data = MintData({
                 to: reserveWallet,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MIN_RESERVE,
                 user_nonce: nonce
@@ -63,6 +66,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             for (uint256 i = 1; i <= balance; i++) {
                 genesis.transferFrom(reserveWallet, vm.addr(0xdead), i);
             }
+            vm.stopPrank();
         }
         // Phase [PRIVATE]: mint from 300 wallets (600 tokens)
         {
@@ -71,7 +75,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             assertEq(genesis.remainingSupply(), 9799);
             while (genesis.remainingSupply() > 9199) {
                 address dest = vm.addr(wallet_index);
-                changePrank(dest);
+                vm.startPrank(dest);
                 bytes32 nonce = bytes32(keccak256(abi.encode(dest)));
                 MintData memory data = MintData({
                     to: dest,
@@ -95,6 +99,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
                 // Test the transfer
                 genesis.transferFrom(dest, vm.addr(0xdead), (token_count - 1));
                 genesis.transferFrom(dest, vm.addr(0xdead), (token_count));
+                vm.stopPrank();
             }
             assertEq(mint_count, expected_mint_count);
             assertEq(genesis.remainingSupply(), 9199);
@@ -106,7 +111,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             assertEq(genesis.remainingSupply(), 9199);
             while (genesis.remainingSupply() > 199) {
                 address dest = vm.addr(wallet_index);
-                changePrank(dest);
+                vm.startPrank(dest);
                 bytes32 nonce = bytes32(keccak256(abi.encode(dest)));
                 MintData memory data = MintData({
                     to: dest,
@@ -130,6 +135,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
                 // Tokens can be transfered after public mint
                 genesis.transferFrom(dest, vm.addr(0xdead), (token_count - 1));
                 genesis.transferFrom(dest, vm.addr(0xdead), (token_count));
+                vm.stopPrank();
             }
             assertEq(mint_count, expected_mint_count);
             assertEq(genesis.remainingSupply(), 199);
@@ -138,13 +144,13 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         assertEq(genesis.remainingSupply(), 199);
         // Phase [RESERVE]: if there are unminted tokens after the public window, mint the remaining for the reserve
         {
-            changePrank(reserveWallet);
+            vm.startPrank(reserveWallet);
             assertEq(genesis.remainingSupply(), 199);
             bytes32 nonce = bytes32(keccak256(abi.encodePacked(reserveWallet, "_bis")));
             MintData memory data = MintData({
                 to: reserveWallet,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: 199,
                 user_nonce: nonce
@@ -156,17 +162,18 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             token_count += balance;
             // We already transfered the first batch of reserve tokens
             assertEq(balance, 199);
+            vm.stopPrank();
         }
         assertEq(genesis.remainingSupply(), 0);
         // A user send its tx with gas too low/forgot to hit send but the supply is now empty
         {
             address dest = vm.addr(0xc1053d);
-            changePrank(dest);
+            vm.startPrank(dest);
             bytes32 nonce = bytes32(keccak256(abi.encode(dest)));
             MintData memory data = MintData({
                 to: dest,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MAX_PUBLIC,
                 user_nonce: nonce
@@ -175,6 +182,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
 
             vm.expectRevert(Errors.MaxSupplyReached.selector);
             genesis.mintWithSignature(data, sig);
+            vm.stopPrank();
         }
     }
 
@@ -196,7 +204,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: reserveWallet,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MIN_RESERVE,
                 user_nonce: nonce
@@ -213,7 +221,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: reserveWallet,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MIN_RESERVE,
                 user_nonce: nonce
@@ -231,7 +239,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: reserveWallet,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: 9799,
                 user_nonce: nonce
@@ -256,7 +264,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -284,12 +292,13 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
      * @dev should revert with SignatureValidityStart
      */
     function test_RevertWhen_mint_validity_start() public {
-        vm.warp(100);
+        uint256 _now = block.timestamp;
+        vm.warp(_now - 1 days);
         bytes32 nonce = bytes32(keccak256(abi.encode(bob)));
         MintData memory data = MintData({
             to: bob,
-            validity_start: 200,
-            validity_end: 500,
+            validity_start: _now,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -297,10 +306,6 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         bytes memory sig = get_mint_data_sig(minterPrivateKey, data);
 
         vm.expectRevert(Errors.SignatureValidityStart.selector);
-        vm.prank(bob);
-        genesis.mintWithSignature(data, sig);
-
-        vm.warp(201);
         vm.prank(bob);
         genesis.mintWithSignature(data, sig);
     }
@@ -314,14 +319,13 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 5 minutes,
+            validity_end: block.timestamp - 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
         });
         bytes memory sig = get_mint_data_sig(minterPrivateKey, data);
 
-        vm.warp(1 days);
         vm.prank(bob);
         vm.expectRevert(Errors.SignatureValidityEnd.selector);
         genesis.mintWithSignature(data, sig);
@@ -336,7 +340,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -362,7 +366,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: bob,
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: MINT_MAX_PUBLIC,
             user_nonce: nonce
@@ -386,7 +390,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: bob,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MAX_PUBLIC,
                 user_nonce: nonce
@@ -401,7 +405,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: bob,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MAX_PRIVATE,
                 user_nonce: nonce
@@ -416,7 +420,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
             MintData memory data = MintData({
                 to: bob,
                 validity_start: block.timestamp,
-                validity_end: 1 days,
+                validity_end: block.timestamp + 1 days,
                 chain_id: block.chainid,
                 mint_amount: MINT_MIN_RESERVE,
                 user_nonce: nonce
@@ -438,7 +442,7 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         MintData memory data = MintData({
             to: address(0),
             validity_start: block.timestamp,
-            validity_end: 1 days,
+            validity_end: block.timestamp + 1 days,
             chain_id: block.chainid,
             mint_amount: 3,
             user_nonce: nonce
@@ -450,4 +454,5 @@ contract MintWithSignature_Test is GenesisPFP_Base_Test {
         vm.expectRevert("ERC721Psi: mint to the zero address");
         genesis.mintWithSignature(data, sig);
     }
+
 }

@@ -18,3 +18,6 @@ docs/
 
 # VS Code
 settings.json
+
+# npm
+node_modules

@@ -1,15 +1,35 @@
 [profile.default]
 src = 'src'
 out = 'out'
-libs = ['lib']
-solc = "0.8.18"
-optimizer = true
-optimizer_runs = 200
-gas_reports = ["GenesisPFP"]
-via_ir = true
+libs = ['lib', 'node_modules']
+solc = "0.8.24"
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+fs_permissions = [{ access = 'read-write', path = './' }]
+via_ir=false
 
 [profile.default.fuzz]
 runs = 256
 max_test_rejects = 1_000_000
+
+[fmt]
+single_line_statement_blocks = 'single'
+multiline_func_headers = 'params_first'
+sort_imports = true
+contract_new_lines = true
+override_spacing = true
+line_length = 120
+
+[doc]
+ignore = ["**/*.t.sol"]
+out = "docs"
+
+[rpc_endpoints]
+localhost = "http://localhost:8545"
+mainnet = "${RPC_URL_MAINNET}"
+homeverse = "https://rpc.mainnet.oasys.homeverse.games"
+homeverse_testnet = "https://rpc.testnet.oasys.homeverse.games"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

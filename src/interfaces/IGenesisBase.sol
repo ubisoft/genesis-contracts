@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.24;
 
 //  **     **  **       **                    ****   **
 // /**    /** /**      //                    /**/   /**
@@ -19,6 +19,7 @@ import {MintData} from "../types/MintData.sol";
  * setting a metadata CID on top of ERC721Psi, EIP712, Ownable, AccessControl
  */
 interface IGenesisBase {
+
     /**
      * @notice can only be called once if baseURI isn't set
      * @notice can only be called by the contract owner
@@ -32,8 +33,10 @@ interface IGenesisBase {
     /**
      * @notice update the default royalty informations as per ERC2981
      * @notice can only be called by the contract owner
+     * @dev emits UpdateDefaultRoyalty(receiver, feeNumerator)
      * @param receiver address of the new vault receiving royalty fees
      * @param feeNumerator percentage of royalties to apply
      */
     function updateDefaultRoyalty(address receiver, uint96 feeNumerator) external;
+
 }

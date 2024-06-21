@@ -212,3 +212,4 @@ The following dependencies are available under other open-source licenses.
 - [forge-std smart contracts (MIT)](licenses/forge-std/MIT.txt)
 - [OpenZeppelin smart contracts (MIT)](licenses/openzeppelin/MIT.txt)
 - [solidity-bits smart contracts (MIT)](licenses/solidity-bits/MIT.txt)
+- [LayerZero Business License 1.1](licenses/layerzerolabs/LICENSE-LZBL-1.1)
