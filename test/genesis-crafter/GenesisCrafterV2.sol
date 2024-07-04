@@ -118,6 +118,12 @@ contract GenesisCrafterV2 is IGenesisCrafter, GenesisUpgradeable {
     /// @notice wallet receiving crafting fees
     address public vault;
 
+    /// @notice Variable added for upgrade test with gaps
+    address public newFactoryContract;
+
+    /// @notice Storage gap for future upgrades
+    uint256[45] __gap;
+
     // =============================================================
     //                   UUPS
     // =============================================================
@@ -141,13 +147,17 @@ contract GenesisCrafterV2 is IGenesisCrafter, GenesisUpgradeable {
     //                   EXTERNAL
     // =============================================================
 
-    function _determineBestParent(address collection_a, uint256 parent_a, address collection_b, uint256 parent_b, address to) internal returns (uint256, address) {
+    function _determineBestParent(
+        address collection_a,
+        uint256 parent_a,
+        address collection_b,
+        uint256 parent_b,
+        address to
+    ) internal returns (uint256, address) {
         // parent_a can craft
-        (uint256 versionA, uint256 maxCraftCountA) =
-            _validateCraftConditions(collection_a, parent_a, to);
+        (uint256 versionA, uint256 maxCraftCountA) = _validateCraftConditions(collection_a, parent_a, to);
         // parent_b can craft
-        (uint256 versionB, uint256 maxCraftCountB) =
-            _validateCraftConditions(collection_b, parent_b, to);
+        (uint256 versionB, uint256 maxCraftCountB) = _validateCraftConditions(collection_b, parent_b, to);
 
         // Collection to mint from is determined by the oldest deployed contract
         // or biggest max craft count if both parents belong to the same contract
@@ -178,7 +188,9 @@ contract GenesisCrafterV2 is IGenesisCrafter, GenesisUpgradeable {
         onlyRole(MINTER_ROLE)
         craftCounterEqualsAsExpected(request)
     {
-        (uint256 newMaxCraftCount, address refParentAddress) = _determineBestParent(request.collection_a, request.parent_a, request.collection_b, request.parent_b, request.to);
+        (uint256 newMaxCraftCount, address refParentAddress) = _determineBestParent(
+            request.collection_a, request.parent_a, request.collection_b, request.parent_b, request.to
+        );
 
         // Determine the payment type used and process payment if needed
         if (request.payment_type != address(0)) {

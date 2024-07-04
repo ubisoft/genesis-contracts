@@ -10,8 +10,8 @@ pragma solidity 0.8.24;
 // //*******  /******  /** ****** //******   /**    //**
 // ///////    /////    // //////   //////    //      //
 
-import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {GenesisUpgradeable} from "src/abstracts/GenesisUpgradeable.sol";
 import {IGenesisChampion} from "src/interfaces/IGenesisChampion.sol";
 import {IGenesisChampionFactory} from "src/interfaces/IGenesisChampionFactory.sol";
@@ -27,6 +27,8 @@ import {CraftData} from "src/types/CraftData.sol";
  * @notice GenesisCrafter is a UUPS proxy implementing crafting mechanisms & rules for all GenesisChampion tokens
  */
 contract GenesisCrafter is IGenesisCrafter, GenesisUpgradeable {
+
+    using SafeERC20 for IERC20;
 
     // =============================================================
     //                   EVENTS
@@ -99,10 +101,10 @@ contract GenesisCrafter is IGenesisCrafter, GenesisUpgradeable {
      * Token-specific policies are defined in `craftRule[collection][id]`
      * Token-specific policies take precedence over Collection-wide policies;
      */
-    mapping(address => mapping(uint256 => address)) public craftRule;
+    mapping(address collection => mapping(uint256 tokenId => address crafterRuleAddress)) public craftRule;
 
-    /// @notice craftCounters holds the CraftData of all Champions from any deployed GenesisChampion contract
-    mapping(address => mapping(uint256 => CraftCounter)) public craftCounters;
+    /// @notice craftCounters holds the CraftCounter  data of all tokenIds of any deployed GenesisChampion collections
+    mapping(address collection => mapping(uint256 tokenId => CraftCounter tokenCraftCounter)) public craftCounters;
 
     // =============================================================
     //                   VARIABLES
@@ -113,6 +115,9 @@ contract GenesisCrafter is IGenesisCrafter, GenesisUpgradeable {
 
     /// @notice wallet receiving crafting fees
     address public vault;
+
+    /// @notice Storage gap for future upgrades
+    uint256[46] __gap;
 
     // =============================================================
     //                   UUPS
@@ -334,8 +339,18 @@ contract GenesisCrafter is IGenesisCrafter, GenesisUpgradeable {
      */
     function _processERC20Payment(address payer, address token, uint256 value) internal {
         IERC20 erc20 = IERC20(token);
-        bool success = erc20.transferFrom(payer, vault, value);
-        if (!success) revert Errors.TransferCraftFees(token, value, vault);
+
+        // Balance before calling transferFrom
+        uint256 receiverBalanceBefore = erc20.balanceOf(vault);
+
+        erc20.safeTransferFrom(payer, vault, value);
+
+        // Balances after calling transferFrom
+        uint256 receiverBalanceAfter = erc20.balanceOf(vault);
+
+        if (receiverBalanceAfter != (receiverBalanceBefore + value)) {
+            revert Errors.TransferCraftFees(token, value, vault);
+        }
         emit CraftFees(vault, token, value, payer);
     }
 

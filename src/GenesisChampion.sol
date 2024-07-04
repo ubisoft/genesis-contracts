@@ -20,7 +20,6 @@ import {Context as ContextV5} from "@openzeppelin/contracts/utils/Context.sol";
 import {Context as ContextV4} from "openzeppelinV4/utils/Context.sol";
 import {Strings} from "openzeppelinV4/utils/Strings.sol";
 import {ERC721Psi} from "src/ERC721Psi/ERC721Psi.sol";
-import {ERC721PsiAddressData} from "src/ERC721Psi/extension/ERC721PsiAddressData.sol";
 import {GenesisChampionArgs as ConstructorArgs} from "src/types/GenesisChampionArgs.sol";
 
 contract GenesisChampion is GenesisBaseV2, IGenesisChampion, OApp {
@@ -58,8 +57,8 @@ contract GenesisChampion is GenesisBaseV2, IGenesisChampion, OApp {
         // Setup MINTER_ROLE
         if (args.minter != address(0)) _grantRole(MINTER_ROLE, args.minter);
         if (args.crafter != address(0)) _grantRole(MINTER_ROLE, args.crafter);
-        // Set royalties to a default 5% using ERC2981
-        _setDefaultRoyalty(args.vault, 500);
+        // Set royalties to a default 9% using ERC2981
+        _setDefaultRoyalty(args.vault, 900);
         // Set baseURI, or call setBaseURI() later if empty arg
         baseURI = args.baseURI;
         // Set the default maximum craft count

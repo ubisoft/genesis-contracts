@@ -3,13 +3,15 @@ pragma solidity ^0.8.24;
 
 import {GenesisChampion_Base_Test} from "./GenesisChampion.t.sol";
 import {MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OApp.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+
 import {MessagingReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OAppSender.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {Packet} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ISendLib.sol";
 import {ExecutorOptions} from "@layerzerolabs/lz-evm-protocol-v2/contracts/messagelib/libs/ExecutorOptions.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
 import {IAccessControl} from "openzeppelinV4/access/IAccessControl.sol";
@@ -97,13 +99,26 @@ contract GenesisChampion_Bridge_Test is GenesisChampion_Base_Test {
 
         // User received its nft
         assertEq(champion2.ownerOf(targetToken), bob);
+        vm.stopPrank();
+
+        // Intermediate: try to steal the token from another wallet
+        address thief = vm.addr(0xABCDEF);
+        vm.deal(thief, 1 ether);
+
+        bytes memory opts2 = OptionsBuilder.newOptions().addExecutorLzReceiveOption(150000, 0);
+        MessagingFee memory fee2 = champion2.quote(eid1, thief, targetToken, opts2, false);
+
+        vm.prank(thief);
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721InvalidSender.selector, thief));
+        champion2.send{value: fee2.nativeFee}(eid1, thief, targetToken, opts2);
 
         // STEP 4: Bridge back
-        bytes memory opts2 = OptionsBuilder.newOptions().addExecutorLzReceiveOption(150000, 0);
-        MessagingFee memory fee2 = champion2.quote(eid1, bob, targetToken, opts2, false);
+        vm.startPrank(bob);
+        bytes memory opts3 = OptionsBuilder.newOptions().addExecutorLzReceiveOption(150000, 0);
+        MessagingFee memory fee3 = champion2.quote(eid1, bob, targetToken, opts3, false);
         vm.expectEmit();
         emit IERC721.Transfer(bob, address(0), targetToken);
-        MessagingReceipt memory receipt2 = champion2.send{value: fee2.nativeFee}(eid1, bob, targetToken, opts2);
+        MessagingReceipt memory receipt2 = champion2.send{value: fee3.nativeFee}(eid1, bob, targetToken, opts3);
 
         // Token is burnt
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, targetToken));

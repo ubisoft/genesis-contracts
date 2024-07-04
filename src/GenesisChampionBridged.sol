@@ -14,6 +14,8 @@ import {MessagingFee, OApp, Origin} from "@layerzerolabs/lz-evm-oapp-v2/contract
 import {MessagingReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/OAppSender.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+
 
 /**
  * @title GenesisChampionBridged
@@ -56,6 +58,7 @@ contract GenesisChampionBridged is ERC721, OApp {
         payable
         returns (MessagingReceipt memory receipt)
     {
+        if (_ownerOf(_id) != msg.sender) revert IERC721Errors.ERC721InvalidSender(msg.sender);
         _burn(_id);
         bytes memory _payload = abi.encode(_dstTo, _id);
         receipt = _lzSend(_dstEid, _payload, _options, MessagingFee(msg.value, 0), payable(msg.sender));
@@ -100,7 +103,7 @@ contract GenesisChampionBridged is ERC721, OApp {
     ) internal override {
         (address to, uint256 id) = abi.decode(payload, (address, uint256));
         require(_ownerOf(id) == address(0), "token already exists");
-        _mint(to, id);
+        _safeMint(to, id);
     }
 
 }

@@ -72,6 +72,12 @@ contract GenesisMinterV2 is IGenesisMinter, GenesisUpgradeable {
     /// @notice GenesisChampionFactory contract instance
     IGenesisChampionFactory public factory;
 
+    /// @notice Variable added for upgrade test with gaps
+    address public newFactoryContract;
+
+    /// @notice Storage gap for future upgrades
+    uint256[47] __gap;
+
     // =============================================================
     //                   UUPS
     // =============================================================

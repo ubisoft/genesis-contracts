@@ -11,17 +11,13 @@ pragma solidity 0.8.24;
 // ///////    /////    // //////   //////    //      //
 
 import {AccessControl} from "openzeppelinV4/access/AccessControl.sol";
-import {IAccessControl} from "openzeppelinV4/access/IAccessControl.sol";
 import {IERC721} from "openzeppelinV4/token/ERC721/IERC721.sol";
-import {IERC721Metadata} from "openzeppelinV4/token/ERC721/extensions/IERC721Metadata.sol";
 import {ERC2981} from "openzeppelinV4/token/common/ERC2981.sol";
-import {EIP712} from "openzeppelinV4/utils/cryptography/EIP712.sol";
 import {ERC721Psi} from "src/ERC721Psi/ERC721Psi.sol";
 import {ERC721PsiAddressData} from "src/ERC721Psi/extension/ERC721PsiAddressData.sol";
 import {ERC721PsiBurnable} from "src/ERC721Psi/extension/ERC721PsiBurnable.sol";
 import {IGenesisBase} from "src/interfaces/IGenesisBase.sol";
 import {Errors} from "src/librairies/Errors.sol";
-import {MintData} from "src/types/MintData.sol";
 
 /**
  * @title GenesisBaseV2

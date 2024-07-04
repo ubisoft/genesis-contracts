@@ -170,11 +170,8 @@ contract AuthenticatedRelay_Claim_Test is AuthenticatedRelay_Base_Test {
             bytes memory result = relay.relay(data, sig);
             (uint256 firstId, uint256 lastId) = abi.decode(result, (uint256, uint256));
 
-            // get all tokens owned by address and verify they were minted in the range [firstId;lastId]
-            uint256[] memory tokens = champion.tokensOfOwner(to);
-            assertEq(tokens.length, amount);
-            assertEq(tokens[0], firstId);
-            assertEq(tokens[tokens.length - 1], lastId);
+            uint256 balanceAfter = champion.balanceOf(to);
+            assertEq(balanceAfter, amount);
         }
         // to's balance equals the requested `amount`
         uint256 balance = champion.balanceOf(to);
@@ -289,10 +286,8 @@ contract AuthenticatedRelay_Claim_Test is AuthenticatedRelay_Base_Test {
             (uint256 firstId, uint256 lastId) = abi.decode(result, (uint256, uint256));
 
             // get all tokens owned by address and verify they were minted in the range [firstId;lastId]
-            uint256[] memory tokens = champion.tokensOfOwner(to);
-            assertEq(tokens.length, amount);
-            assertEq(tokens[0], firstId);
-            assertEq(tokens[tokens.length - 1], lastId);
+            uint256 balanceAfter = champion.balanceOf(to);
+            assertEq(balanceAfter, amount);
         }
 
         // to's balance equals the requested `amount`

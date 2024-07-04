@@ -30,7 +30,7 @@ contract GenesisCrafterRule is IGenesisCrafterRule, Ownable {
     //                   MAPPINGS
     // =============================================================
 
-    mapping(address => mapping(uint256 => uint256)) private maxCraftCounts;
+    mapping(address collection => mapping(uint256 tokenId => uint256 maxCraftCount)) private maxCraftCounts;
 
     // =============================================================
     //                   VARIABLES

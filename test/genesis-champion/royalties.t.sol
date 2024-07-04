@@ -37,9 +37,9 @@ contract GenesisChampion_Royalties_Test is GenesisChampion_Base_Test {
      */
     function test_get_royalty_info() public {
         uint256 salePrice = 1 ether;
-        uint256 expectedRoyaltyAmount = 0.05 ether;
+        uint256 expectedRoyaltyAmount = 0.09 ether;
         // Compute the royaltyAmount to pay to the vault at each token sale for tokenId 1 and a salePrice of 1 ether
-        // royaltyInfo computes the royalty fee using a 5% royalty fee
+        // royaltyInfo computes the royalty fee using a 9% royalty fee
         (address receiver, uint256 royaltyAmount) = champion.royaltyInfo(1, salePrice);
         assertEq(receiver, address(vault));
         assertEq(royaltyAmount, expectedRoyaltyAmount);

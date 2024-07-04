@@ -29,7 +29,7 @@ contract GenesisMinter is IGenesisMinter, GenesisUpgradeable {
     //                   EVENTS
     // =============================================================
 
-    /// @notice emitted after a successful `claimWithSignature`
+    /// @notice emitted after a successful `claim`
     event Claim(address indexed collection, bytes32 indexed nonce, uint256 amount);
 
     /// @notice emitted after changing the factory address
@@ -62,7 +62,7 @@ contract GenesisMinter is IGenesisMinter, GenesisUpgradeable {
     // =============================================================
 
     /// @notice Supply associated to the initial claim for each collection
-    mapping(address => SupplyConfig) public supply;
+    mapping(address collectionAddress => SupplyConfig collectionSupply) public supply;
 
     // =============================================================
     //                   VARIABLES
@@ -70,6 +70,9 @@ contract GenesisMinter is IGenesisMinter, GenesisUpgradeable {
 
     /// @notice GenesisChampionFactory contract instance
     IGenesisChampionFactory public factory;
+
+    /// @notice Storage gap for future upgrades
+    uint256[48] __gap;
 
     // =============================================================
     //                   UUPS

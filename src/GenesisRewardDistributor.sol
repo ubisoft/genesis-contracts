@@ -14,7 +14,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC1155} from "forge-std/interfaces/IERC1155.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {IERC721} from "forge-std/interfaces/IERC721.sol";
-import {GenesisChampion} from "src/GenesisChampion.sol";
 import {IGenesisRewardDistributor} from "src/interfaces/IGenesisRewardDistributor.sol";
 import {Errors} from "src/librairies/Errors.sol";
 import {RewardClaim} from "src/types/RewardClaim.sol";
@@ -86,7 +85,7 @@ contract GenesisRewardDistributor is IGenesisRewardDistributor, AccessControl {
     // =============================================================
 
     /// @notice rewards is the supply configuration for a specific period
-    mapping(uint256 => SeasonReward) public rewards;
+    mapping(uint256 season => SeasonReward rewardConfig) public rewards;
 
     // =============================================================
     //                   CONSTRUCTOR
