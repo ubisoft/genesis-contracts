@@ -141,12 +141,12 @@ contract GenesisRewardDistributor is IGenesisRewardDistributor, AccessControl {
         currentSeason.supply -= allocation;
 
         // Mint the reward following its type
-        if (currentSeason.rewardType == uint8(RewardType.ERC20)) {
-            IERC20MintableReward(currentSeason.collection).mint(request.to, request.amount);
-        } else if (currentSeason.rewardType == uint8(RewardType.ERC721)) {
+        if (currentSeason.rewardType == uint8(RewardType.ERC721)) {
             IERC721MintableReward(currentSeason.collection).mint(request.to, request.amount);
-        } else {
+        } else if (currentSeason.rewardType == uint8(RewardType.ERC1155)) {
             IERC1155MintableReward(currentSeason.collection).mint(request.to, currentSeason.tokenId, request.amount, "");
+        } else {
+            IERC20MintableReward(currentSeason.collection).mint(request.to, request.amount);
         }
         emit ClaimReward(request.nonce, request.to);
     }
