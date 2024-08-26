@@ -8,16 +8,26 @@ Champions Tactics™ Grimoria Chronicles is a PVP Tactical RPG game on PC by Ubi
 
 For a global overview of the contracts, refer to the diagram below
 
-![Architecture diagram](architecture.png "Genesis contracts architecture")
-
+![Architecture diagram](architecture.png 'Genesis contracts architecture')
 
 ## Security
 
 `GenesisPFP` is deployed on Ethereum mainnet at address `0xE841e6e68BECFC54b621A23a41f8C1a829a4cf44` and has been audited by KALOS. The report can be found [here](<./audit/[KALOS] Ubisoft Genesis PFP Audit Report v1.0 (ENG).pdf>).
 
-`GenesisChampionFactory`, `GenesisChampion`, `GenesisMinter`, `GenesisCrafter`, `GenesisRewardsDistributor`, `GenesisCrafterRule` have not yet been deployed.
+`GenesisChampionFactory`, `GenesisChampion`, `GenesisMinter`, `GenesisCrafter`, `GenesisRewardsDistributor`, `GenesisCrafterRule` have been audited by Halborn.
+The report can be found [here](<./audit/Champions Tactics_ Grimoria Chronicles Audit.pdf>).
 
-`AuthenticatedRelay` is our global entrypoint for all mint operations on any EVM chain, it's hasn't been deployed yet.
+### Deployments
+
+Please find below the addresses of deployed contracts:
+
+| Contract name            | Contract address                           | Network          |
+| ------------------------ | ------------------------------------------ | ---------------- |
+| GenesisPFP               | 0xE841e6e68BECFC54b621A23a41f8C1a829a4cf44 | Ethereum mainnet |
+| GenesisChampion          | 0x9d13bddc0e8e19a2a4a88a5a39fe0c12f005fa16 | Oasys Homeverse  |
+| GenesisChampionFactory   | 0xfb6d4eccab107bfdbfd6ee78668acda3b55c2ace | Oasys Homeverse  |
+| GenesisMinter            | 0xe92e9adb3056cd7afc08ae4550ea8db972d0388b | Oasys Homeverse  |
+| AuthenticatedRelay       | 0x89806ee417308debd454c24d0e5b9da3ee93dd07 | Oasys Homeverse  |
 
 ### Slither reports
 
@@ -33,11 +43,13 @@ For a global overview of the contracts, refer to the diagram below
 3. Initialize the submodules
 
 ```bash
-# when switching branch, it's recommended to deinit the submodules first with: 
+# when switching branch, it's recommended to deinit the submodules first with:
 # git submodule deinit --force .
 git submodule update --init --recursive
 ```
+
 4. Install external dependencies for `lib/authenticated-relay` (see [README.md](./lib/authenticated-relay/README.md))
+
 ```
 cd lib/authenticated-relay
 forge install
@@ -46,7 +58,8 @@ pushd lib/contracts-library
 yarn && yarn build
 popd
 ```
-5. Install node dependencies: `npm install` 
+
+5. Install node dependencies: `npm install`
 
 ## Contract documentation
 
