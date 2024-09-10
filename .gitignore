@@ -21,3 +21,4 @@ settings.json
 
 # npm
 node_modules
+**/.DS_Store

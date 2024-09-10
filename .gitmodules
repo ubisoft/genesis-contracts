@@ -18,7 +18,7 @@
 	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
 [submodule "lib/authenticated-relay"]
 	path = lib/authenticated-relay
-	url = https://gitlab-ncsa.ubisoft.org/blockchain-initiative/authenticated-relay
+	url = https://github.com/ubisoft/authenticated-relay
 [submodule "lib/marketplace-contracts"]
 	path = lib/marketplace-contracts
 	url = https://github.com/0xsequence/marketplace-contracts
